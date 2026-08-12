@@ -1,0 +1,58 @@
+/* ===== Feishu-Style Design Tokens ===== */
+
+:root {
+  /* Background */
+  --kos-bg: #f5f6f7;
+  --kos-bg-elevated: #ffffff;
+  --kos-panel: #ffffff;
+  --kos-panel-strong: #ffffff;
+  --kos-panel-soft: #fafbfc;
+
+  /* Borders */
+  --kos-border: #e5e6eb;
+  --kos-border-bright: #3370ff;
+  --kos-border-focus: rgba(51, 112, 255, 0.3);
+
+  /* Text */
+  --kos-text: #1f2329;
+  --kos-text-soft: #646a73;
+  --kos-text-muted: #8f959e;
+
+  /* Feishu accent: blue #3370FF */
+  --kos-purple: #3370ff;
+  --kos-purple-soft: #5c8dff;
+  --kos-purple-glow: rgba(51, 112, 255, 0.1);
+  --kos-purple-bg: rgba(51, 112, 255, 0.06);
+  --kos-blue: #3370ff;
+  --kos-cyan: #00c9c9;
+  --kos-green: #00b578;
+  --kos-orange: #ff8800;
+  --kos-pink: #f54e78;
+  --kos-red: #f53f3f;
+
+  /* Semantic */
+  --kos-radius: 8px;
+  --kos-radius-sm: 6px;
+  --kos-radius-xs: 4px;
+  --kos-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  --kos-shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.04);
+
+  /* Typography */
+  --kos-font: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+  --kos-type-micro: 11px;
+  --kos-type-meta: 12px;
+  --kos-type-body: 13px;
+  --kos-type-label: 14px;
+  --kos-type-section: 15px;
+
+  /* Layout */
+  --kos-sidebar-w: 220px;
+  --kos-sidebar-collapsed-w: 56px;
+  --kos-topbar-h: 56px;
+  --kos-status-h: 28px;
+  --kos-copilot-w: 360px;
+  --kos-copilot-collapsed-w: 44px;
+
+  /* Transitions */
+  --kos-ease: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}

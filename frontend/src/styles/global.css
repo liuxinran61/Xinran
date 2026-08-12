@@ -1,0 +1,109 @@
+/* ===== Feishu-Style Global Styles ===== */
+@import "./design-tokens.css";
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body, #root { height: 100%; overflow: hidden; }
+
+body {
+  font-family: var(--kos-font);
+  font-size: var(--kos-type-body);
+  color: var(--kos-text);
+  background: var(--kos-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d0d4da; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #b0b4ba; }
+
+::selection { background: rgba(51,112,255,0.12); }
+
+:focus-visible { outline: 2px solid var(--kos-purple); outline-offset: 1px; }
+
+a { color: var(--kos-purple); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ===== Feishu-Style Shared Components ===== */
+
+.kos-panel {
+  background: var(--kos-panel);
+  border: 1px solid var(--kos-border);
+  border-radius: var(--kos-radius);
+}
+
+.kos-button {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 16px; font-family: var(--kos-font); font-size: var(--kos-type-body);
+  color: var(--kos-text); background: #fff;
+  border: 1px solid var(--kos-border); border-radius: var(--kos-radius-sm);
+  cursor: pointer; transition: all var(--kos-ease);
+}
+.kos-button:hover { border-color: var(--kos-purple); color: var(--kos-purple); }
+
+.kos-button-primary {
+  background: var(--kos-purple); color: #fff; border: none; font-weight: 500;
+}
+.kos-button-primary:hover { background: #2860df; color: #fff; }
+
+.kos-icon-button {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; background: transparent;
+  border: none; border-radius: var(--kos-radius-sm);
+  color: var(--kos-text-soft); cursor: pointer; transition: all var(--kos-ease);
+}
+.kos-icon-button:hover { background: var(--kos-purple-bg); color: var(--kos-purple); }
+
+.kos-input {
+  padding: 7px 12px; font-family: var(--kos-font); font-size: var(--kos-type-body);
+  color: var(--kos-text); background: #fff;
+  border: 1px solid var(--kos-border); border-radius: var(--kos-radius-sm);
+  transition: border-color var(--kos-ease); outline: none;
+}
+.kos-input:focus { border-color: var(--kos-purple); }
+.kos-input::placeholder { color: var(--kos-text-muted); }
+
+.kos-stat-card {
+  background: var(--kos-panel); border: 1px solid var(--kos-border);
+  border-radius: var(--kos-radius); padding: 18px 20px;
+}
+.kos-stat-card:hover { box-shadow: var(--kos-shadow); }
+
+/* Tag / chip */
+.kos-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 10px; font-size: var(--kos-type-micro);
+  color: var(--kos-purple); background: var(--kos-purple-bg);
+  border-radius: 4px; cursor: pointer; transition: all var(--kos-ease);
+}
+.kos-tag:hover { background: rgba(51,112,255,0.12); }
+
+.kos-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 18px; padding: 0 5px;
+  font-size: 10px; font-weight: 500; color: #fff;
+  background: var(--kos-purple); border-radius: 9px;
+}
+
+.kos-meter {
+  width: 100%; height: 4px; background: #f0f1f3; border-radius: 2px; overflow: hidden;
+}
+.kos-meter-fill {
+  height: 100%; background: var(--kos-purple); border-radius: 2px;
+  transition: width 0.5s var(--kos-ease);
+}
+
+.kos-section-title {
+  font-size: var(--kos-type-section); font-weight: 600;
+  color: var(--kos-text); margin-bottom: 14px;
+}
+
+.kos-skeleton {
+  background: linear-gradient(90deg, #f0f1f3 25%, #e5e6eb 50%, #f0f1f3 75%);
+  background-size: 200% 100%; animation: kos-shimmer 1.5s infinite;
+  border-radius: var(--kos-radius-sm);
+}
+@keyframes kos-shimmer {
+  0% { background-position: 200% 0; } 100% { background-position: -200% 0; }
+}

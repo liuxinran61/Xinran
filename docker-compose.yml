@@ -1,0 +1,43 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: smart-kb-pg
+    environment:
+      POSTGRES_USER: smartkb
+      POSTGRES_PASSWORD: smartkb123
+      POSTGRES_DB: smart_kb
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smartkb -d smart_kb"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build: ./backend
+    container_name: smart-kb-api
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: smartkb
+      DB_PASSWORD: smartkb123
+      DB_NAME: smart_kb
+    env_file:
+      - ./backend/.env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:
