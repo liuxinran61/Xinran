@@ -3,13 +3,13 @@ import { useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import clsx from "clsx";
 import { Sidebar } from "./Sidebar";
-import { Copilot } from "./Copilot";
+import { Operator } from "./Operator";
 import { useUIStore } from "../../stores/uiStore";
 import styles from "./AppLayout.module.css";
 
 export function AppLayout() {
   const sidebarCollapsed = useUIStore((s) => s.sidebarCollapsed);
-  const copilotCollapsed = useUIStore((s) => s.copilotCollapsed);
+  const operatorCollapsed = useUIStore((s) => s.operatorCollapsed);
   const setBreakpoint = useUIStore((s) => s.setBreakpoint);
 
   useEffect(() => {
@@ -30,12 +30,12 @@ export function AppLayout() {
       className={clsx(
         styles.app,
         sidebarCollapsed && styles.sidebarCollapsed,
-        copilotCollapsed && styles.copilotCollapsed
+        operatorCollapsed && styles.operatorCollapsed
       )}
     >
       <Sidebar />
       <Outlet />
-      <Copilot />
+      <Operator />
     </div>
   );
 }

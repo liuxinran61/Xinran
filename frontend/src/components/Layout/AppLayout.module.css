@@ -1,23 +1,29 @@
+/* ===== AppLayout — 三列 CSS Grid 布局 ====================================
+   Grid 模板: Sidebar(220px) | Outlet(flex) | Operator(360px)
+   折叠变体: sidebarCollapsed → 56px, operatorCollapsed → 44px
+   响应式: ≤930px 隐藏 Operator, ≤760px 单列堆叠 */
+
 .app {
   display: grid;
-  grid-template-columns: var(--kos-sidebar-w) 1fr var(--kos-copilot-w);
+  grid-template-columns: var(--kos-sidebar-w) 1fr var(--kos-operator-w);
   height: 100vh; min-height: 620px;
   background: var(--kos-bg);
 }
-.sidebarCollapsed { grid-template-columns: var(--kos-sidebar-collapsed-w) 1fr var(--kos-copilot-w); }
-.copilotCollapsed { grid-template-columns: var(--kos-sidebar-w) 1fr var(--kos-copilot-collapsed-w); }
-.sidebarCollapsed.copilotCollapsed { grid-template-columns: var(--kos-sidebar-collapsed-w) 1fr var(--kos-copilot-collapsed-w); }
+/* ── 折叠状态 ──────────────────────────────────────── */
+.sidebarCollapsed { grid-template-columns: var(--kos-sidebar-collapsed-w) 1fr var(--kos-operator-w); }
+.operatorCollapsed { grid-template-columns: var(--kos-sidebar-w) 1fr var(--kos-operator-collapsed-w); }
+.sidebarCollapsed.operatorCollapsed { grid-template-columns: var(--kos-sidebar-collapsed-w) 1fr var(--kos-operator-collapsed-w); }
 @media (max-width: 1180px) {
-  .app { grid-template-columns: var(--kos-sidebar-collapsed-w) 1fr var(--kos-copilot-w); }
-  .copilotCollapsed { grid-template-columns: var(--kos-sidebar-collapsed-w) 1fr var(--kos-copilot-collapsed-w); }
+  .app { grid-template-columns: var(--kos-sidebar-collapsed-w) 1fr var(--kos-operator-w); }
+  .operatorCollapsed { grid-template-columns: var(--kos-sidebar-collapsed-w) 1fr var(--kos-operator-collapsed-w); }
 }
 @media (max-width: 930px) {
-  .app, .sidebarCollapsed, .copilotCollapsed, .sidebarCollapsed.copilotCollapsed {
+  .app, .sidebarCollapsed, .operatorCollapsed, .sidebarCollapsed.operatorCollapsed {
     grid-template-columns: var(--kos-sidebar-collapsed-w) 1fr;
   }
 }
 @media (max-width: 760px) {
-  .app, .sidebarCollapsed, .copilotCollapsed, .sidebarCollapsed.copilotCollapsed {
+  .app, .sidebarCollapsed, .operatorCollapsed, .sidebarCollapsed.operatorCollapsed {
     grid-template-columns: 1fr; grid-template-rows: 1fr auto;
   }
 }

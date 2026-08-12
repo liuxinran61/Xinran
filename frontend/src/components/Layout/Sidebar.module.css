@@ -1,18 +1,24 @@
+/* ===== Sidebar — 侧边导航样式 =============================================
+   响应式折叠: ≤1180px → 56px 纯图标模式 */
+
 .sidebar {
   display: flex; flex-direction: column;
   padding: 16px 10px; background: #fff;
   border-right: 1px solid var(--kos-border);
   height: 100vh; overflow-y: auto;
 }
+
+/* ── 品牌 Logo（双菱形 CSS 绘制）───────────────────── */
 .brand { display: flex; align-items: center; gap: 10px; padding: 0 6px; margin-bottom: 18px; }
 .logo { position: relative; width: 32px; height: 32px; flex-shrink: 0; }
 .diamond { position: absolute; width: 18px; height: 18px; border-radius: 4px; }
 .diamondA { background: var(--kos-purple); transform: rotate(34deg) skewY(-8deg); top: 6px; left: 6px; }
 .diamondB { background: rgba(51,112,255,0.4); transform: rotate(-34deg) skewY(-8deg); top: 6px; left: 6px; }
 .brandTitle { font-size: 15px; font-weight: 700; color: var(--kos-text); }
+.brandTitle { font-size: 15px; font-weight: 700; color: var(--kos-text); }
 .brandSubtitle { font-size: 10px; color: var(--kos-text-muted); }
 
-/* Section accordion */
+/* ── KB 分组手风琴 ─────────────────────────────────── */
 .section { margin-top: 2px; }
 .sectionToggle {
   display: flex; align-items: center; gap: 6px;
@@ -51,20 +57,8 @@
 .navCompact:hover { background: var(--kos-purple-bg); color: var(--kos-purple); }
 .divider { height: 1px; background: var(--kos-border); margin: 10px 0; }
 
-.vaultCard {
-  margin-top: auto; padding: 14px;
-  background: var(--kos-panel-soft); border: 1px solid var(--kos-border);
-  border-radius: var(--kos-radius);
-}
-.vaultTitle { display: flex; align-items: center; justify-content: space-between; font-size: var(--kos-type-label); font-weight: 600; color: var(--kos-text); margin-bottom: 8px; }
-.vaultRow { display: flex; justify-content: space-between; padding: 2px 0; font-size: var(--kos-type-micro); color: var(--kos-text-muted); }
-.vaultRow strong { color: var(--kos-text); font-weight: 600; }
-.meter { height: 3px; background: #f0f1f3; border-radius: 2px; margin: 6px 0; overflow: hidden; }
-.meterFill { display: block; height: 100%; background: var(--kos-purple); border-radius: 2px; }
-.live { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--kos-text-muted); }
-.liveDot { width: 6px; height: 6px; border-radius: 50%; background: var(--kos-green); }
+/* ── 响应式折叠 ────────────────────────────────────── */
 @media (max-width: 1180px) {
-  .navCopy, .navLabel, .vaultCard, .navCompact span, .brandText, .divider { display: none !important; }
   .sidebar { padding: 12px 6px; align-items: center; }
   .navItem { justify-content: center; padding: 8px 0; }
   .navCompact { justify-content: center; }

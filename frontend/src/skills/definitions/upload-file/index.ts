@@ -25,7 +25,7 @@ export const uploadFileSkill: Skill = {
   },
 };
 
-/** Direct file upload — called from Copilot when file is selected via picker/drop */
+/** Direct file upload — called from Operator when file is selected via picker/drop */
 export async function executeFileUpload(
   file: File,
   ctx: SkillContext,

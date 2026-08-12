@@ -1,4 +1,12 @@
-// ===== Knowledge OS — App Entry =====
+// ===== Knowledge OS — 应用入口 & 路由配置 =================================
+//
+// 路由表（全部在 AppLayout 三列壳层内渲染）：
+//   /           → HomeView（空状态提示）
+//   /kb/:id     → KBDetailView（知识库详情 — 文件浏览 + RAG 对话）
+//   /graph      → GraphView（知识图谱可视化）
+//   /settings   → SettingsView（系统配置）
+//
+// AppLayout = Sidebar(220px) | <Outlet> | Operator(360px)
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppLayout } from "./components/Layout/AppLayout";
 import { KBDetailView } from "./views/KBDetail/KBDetailView";

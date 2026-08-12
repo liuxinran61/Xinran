@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 from uuid import UUID
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, BackgroundTasks, Query
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,6 +25,18 @@ from app.services.classifier import DocumentClassifier
 
 router = APIRouter(prefix="/api", tags=["Documents"])
 settings = get_settings()
+
+
+async def _get_kb_or_404(kb_id: UUID, db: AsyncSession) -> KnowledgeBase:
+    kb = (await db.execute(select(KnowledgeBase).where(KnowledgeBase.id == kb_id))).scalar_one_or_none()
+    if not kb: raise HTTPException(status_code=404, detail="知识库不存在")
+    return kb
+
+
+async def _get_doc_or_404(doc_id: UUID, db: AsyncSession) -> Document:
+    doc = (await db.execute(select(Document).where(Document.id == doc_id))).scalar_one_or_none()
+    if not doc: raise HTTPException(status_code=404, detail="文档不存在")
+    return doc
 
 
 async def process_document_background(doc_id: UUID, kb_id: UUID, file_path: str, file_type: str, db_session_factory):
@@ -135,6 +147,7 @@ async def process_document_background(doc_id: UUID, kb_id: UUID, file_path: str,
 @router.get("/knowledge-bases/{kb_id}/documents", response_model=List[DocumentResponse])
 async def list_documents(kb_id: UUID, db: AsyncSession = Depends(get_db)):
     """List all documents in a knowledge base."""
+    await _get_kb_or_404(kb_id, db)
     result = await db.execute(
         select(Document).where(Document.kb_id == kb_id).order_by(Document.created_at.desc())
     )
@@ -149,10 +162,7 @@ async def upload_document(
     db: AsyncSession = Depends(get_db),
 ):
     """Upload a document to a knowledge base. Processing happens in background."""
-    # Validate knowledge base
-    kb_result = await db.execute(select(KnowledgeBase).where(KnowledgeBase.id == kb_id))
-    if not kb_result.scalar_one_or_none():
-        raise HTTPException(status_code=404, detail="Knowledge base not found")
+    await _get_kb_or_404(kb_id, db)
 
     # Validate file type
     file_type = DocumentParser.get_file_type(file.filename)
@@ -212,10 +222,7 @@ async def import_url(
     db: AsyncSession = Depends(get_db),
 ):
     """Import content from a URL into the knowledge base."""
-    # Validate knowledge base
-    kb_result = await db.execute(select(KnowledgeBase).where(KnowledgeBase.id == kb_id))
-    if not kb_result.scalar_one_or_none():
-        raise HTTPException(status_code=404, detail="Knowledge base not found")
+    await _get_kb_or_404(kb_id, db)
 
     try:
         text = await DocumentParser.parse_url(req.url)
@@ -291,10 +298,7 @@ async def import_url(
 @router.get("/documents/{doc_id}", response_model=DocumentDetailResponse)
 async def get_document(doc_id: UUID, db: AsyncSession = Depends(get_db)):
     """Get document details with chunks."""
-    result = await db.execute(select(Document).where(Document.id == doc_id))
-    doc = result.scalar_one_or_none()
-    if not doc:
-        raise HTTPException(status_code=404, detail="Document not found")
+    doc = await _get_doc_or_404(doc_id, db)
 
     chunks_result = await db.execute(
         select(Chunk).where(Chunk.doc_id == doc_id).order_by(Chunk.chunk_index)
@@ -326,11 +330,8 @@ async def get_document(doc_id: UUID, db: AsyncSession = Depends(get_db)):
 
 @router.patch("/documents/{doc_id}", response_model=DocumentResponse)
 async def update_document(doc_id: UUID, req: DocumentUpdateRequest, db: AsyncSession = Depends(get_db)):
-    """Update document metadata — move to folder or rename."""
-    result = await db.execute(select(Document).where(Document.id == doc_id))
-    doc = result.scalar_one_or_none()
-    if not doc:
-        raise HTTPException(status_code=404, detail="Document not found")
+    """Update document metadata — move to folder, rename, edit tags/description."""
+    doc = await _get_doc_or_404(doc_id, db)
 
     if req.folder_id is not None:
         doc.folder_id = req.folder_id
@@ -338,9 +339,64 @@ async def update_document(doc_id: UUID, req: DocumentUpdateRequest, db: AsyncSes
     if req.filename is not None:
         doc.filename = req.filename
 
+    if req.tags is not None:
+        doc.tags = req.tags
+
+    if req.description is not None:
+        doc.description = req.description
+
     await db.flush()
     await db.refresh(doc)
     return doc
+
+
+@router.post("/documents/{doc_id}/copy", response_model=DocumentResponse, status_code=201)
+async def copy_document(
+    doc_id: UUID,
+    target_folder_id: UUID | None = Query(None, description="Target folder ID to copy into"),
+    db: AsyncSession = Depends(get_db),
+):
+    """Copy a document (and its chunks). Optional query: ?target_folder_id=<uuid>"""
+    doc = await _get_doc_or_404(doc_id, db)
+
+    # Create a new document record (copy metadata)
+    import copy as _copy
+    new_doc = Document(
+        kb_id=doc.kb_id,
+        filename=doc.filename + " (副本)",
+        file_type=doc.file_type,
+        file_size=doc.file_size,
+        file_path=doc.file_path,
+        parse_status=doc.parse_status,
+        chunk_count=doc.chunk_count,
+        entity_count=doc.entity_count,
+        classification=_copy.deepcopy(doc.classification) if doc.classification else None,
+        source_url=doc.source_url,
+        folder_id=target_folder_id if target_folder_id is not None else doc.folder_id,
+        tags=_copy.deepcopy(doc.tags) if doc.tags else [],
+        description=doc.description,
+    )
+    db.add(new_doc)
+    await db.flush()
+
+    # Copy chunks
+    chunks_result = await db.execute(
+        select(Chunk).where(Chunk.doc_id == doc_id).order_by(Chunk.chunk_index)
+    )
+    for c in chunks_result.scalars().all():
+        new_chunk = Chunk(
+            doc_id=new_doc.id,
+            kb_id=new_doc.kb_id,
+            content=c.content,
+            chunk_index=c.chunk_index,
+            embedding=c.embedding,
+            chunk_metadata=_copy.deepcopy(c.chunk_metadata) if c.chunk_metadata else {},
+        )
+        db.add(new_chunk)
+
+    await db.commit()
+    await db.refresh(new_doc)
+    return new_doc
 
 
 @router.get("/classified")
@@ -409,10 +465,7 @@ async def replace_document(
     db: AsyncSession = Depends(get_db),
 ):
     """Replace a document with a new version. Re-classifies and re-processes."""
-    # Find old document
-    old = (await db.execute(select(Document).where(Document.id == doc_id))).scalar_one_or_none()
-    if not old:
-        raise HTTPException(status_code=404, detail="Document not found")
+    old = await _get_doc_or_404(doc_id, db)
 
     file_type = DocumentParser.get_file_type(file.filename)
     os.makedirs(settings.upload_dir, exist_ok=True)
@@ -462,6 +515,7 @@ async def replace_document(
 @router.get("/documents/{doc_id}/versions")
 async def get_document_versions(doc_id: UUID, db: AsyncSession = Depends(get_db)):
     """Get version history for a document chain."""
+    await _get_doc_or_404(doc_id, db)
     # Walk the chain backwards to find the original
     versions = []
     current_id = doc_id
@@ -490,10 +544,7 @@ async def get_document_versions(doc_id: UUID, db: AsyncSession = Depends(get_db)
 @router.delete("/documents/{doc_id}", status_code=204)
 async def delete_document(doc_id: UUID, db: AsyncSession = Depends(get_db)):
     """Delete a document and its chunks."""
-    result = await db.execute(select(Document).where(Document.id == doc_id))
-    doc = result.scalar_one_or_none()
-    if not doc:
-        raise HTTPException(status_code=404, detail="Document not found")
+    doc = await _get_doc_or_404(doc_id, db)
 
     # Delete file from disk
     if os.path.exists(doc.file_path):

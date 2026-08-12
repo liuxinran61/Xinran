@@ -1,4 +1,4 @@
-// ===== Agent Panel — LLM function-calling agent =====
+// ===== KB Operator Panel — LLM function-calling import assistant =====
 import { useState, useEffect, useRef } from "react";
 import {
   PanelRightClose, PanelRightOpen, Upload, Globe,
@@ -9,14 +9,14 @@ import { useUIStore } from "../../stores/uiStore";
 import { listKBs } from "../../api/client";
 import type { KnowledgeBase } from "../../types";
 import { getSkills, type SkillContext } from "../../skills/registry";
-import styles from "./Copilot.module.css";
+import styles from "./Operator.module.css";
 
 const API_BASE = "http://localhost:8004";
 const FILE_ACCEPT = ".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.md,.markdown,.pptx,.ppt,.html,.htm,.xml,.json,.log,.properties,.yaml,.yml,.toml,.ini,.cfg,.png,.jpg,.jpeg,.gif,.bmp,.webp,.svg,.ico,.tiff,.tif,.heic,.mp3,.wav,.m4a,.aac,.ogg,.flac,.mp4,.mov,.avi,.mkv,.webm";
 
-// ── Agent system prompt ──────────────────────────────────
+// ── Operator system prompt ────────────────────────────────
 
-const AGENT_SYSTEM = `你是一个知识库助手，帮用户将文档和链接导入知识库。
+const OPERATOR_SYSTEM = `你是一个知识库助手，帮用户将文档和链接导入知识库。
 
 ## 你可以使用的工具
 - **import_url**: 导入网页链接。当用户提供网页URL时自动调用。
@@ -31,7 +31,7 @@ const AGENT_SYSTEM = `你是一个知识库助手，帮用户将文档和链接�
 
 // ── OpenAI tool definitions ──────────────────────────────
 
-const AGENT_TOOLS = [
+const OPERATOR_TOOLS = [
   {
     type: "function" as const,
     function: {
@@ -58,9 +58,9 @@ const AGENT_TOOLS = [
 
 // ── Types ────────────────────────────────────────────────
 
-interface AgentMessage {
+interface OperatorMessage {
   id: string;
-  role: "user" | "agent";
+  role: "user" | "operator";
   content: string;
   status?: "thinking" | "tool" | "done" | "error";
   attachment?: { name: string; size?: number; type: "file" | "url" };
@@ -88,9 +88,9 @@ type ChatMessage =
 
 // ── Component ────────────────────────────────────────────
 
-export function Copilot() {
-  const collapsed = useUIStore((s) => s.copilotCollapsed);
-  const toggleCopilot = useUIStore((s) => s.toggleCopilot);
+export function Operator() {
+  const collapsed = useUIStore((s) => s.operatorCollapsed);
+  const toggleOperator = useUIStore((s) => s.toggleOperator);
 
   // Panel resize
   const [panelWidth, setPanelWidth] = useState(360);
@@ -104,7 +104,7 @@ export function Copilot() {
   const kbRef = useRef<HTMLDivElement>(null);
 
   // Chat
-  const [messages, setMessages] = useState<AgentMessage[]>([]);
+  const [messages, setMessages] = useState<OperatorMessage[]>([]);
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -165,10 +165,10 @@ export function Copilot() {
     apiBase: API_BASE,
   };
 
-  // ── Agent loop ─────────────────────────────────────────
+  // ── Operator loop ───────────────────────────────────────
 
-  const addMsg = (role: "user" | "agent", content: string, extra?: Partial<AgentMessage>) => {
-    const msg: AgentMessage = { id: crypto.randomUUID(), role, content, status: role === "agent" ? "done" : undefined, ...extra };
+  const addMsg = (role: "user" | "operator", content: string, extra?: Partial<OperatorMessage>) => {
+    const msg: OperatorMessage = { id: crypto.randomUUID(), role, content, status: role === "operator" ? "done" : undefined, ...extra };
     setMessages((prev) => [...prev, msg]);
     return msg;
   };
@@ -196,21 +196,21 @@ export function Copilot() {
     return JSON.stringify({ success: false, message: `未知工具: ${name}` });
   };
 
-  /** Main agent loop: send messages → get tool_calls or text → execute → repeat */
-  const runAgent = async (userText: string) => {
+  /** Main loop: send messages → get tool_calls or text → execute → repeat */
+  const runOperator = async (userText: string) => {
     if (!selectedKbId) {
-      addMsg("agent", "请先在上方选择一个目标知识库。", { status: "error" });
+      addMsg("operator", "请先在上方选择一个目标知识库。", { status: "error" });
       return;
     }
 
     const chatMessages: ChatMessage[] = [
-      { role: "system", content: AGENT_SYSTEM },
+      { role: "system", content: OPERATOR_SYSTEM },
       { role: "user", content: userText },
     ];
 
     setThinking(true);
     const thinkingId = crypto.randomUUID();
-    setMessages((prev) => [...prev, { id: thinkingId, role: "agent", content: "", status: "thinking" }]);
+    setMessages((prev) => [...prev, { id: thinkingId, role: "operator", content: "", status: "thinking" }]);
 
     try {
       // Max 3 round-trips to prevent infinite loops
@@ -218,16 +218,16 @@ export function Copilot() {
         const resp = await fetch(`${API_BASE}/api/knowledge-bases/${selectedKbId}/agent/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: chatMessages, tools: AGENT_TOOLS }),
+          body: JSON.stringify({ messages: chatMessages, tools: OPERATOR_TOOLS }),
         });
-        if (!resp.ok) throw new Error(`Agent API error: ${resp.status}`);
+        if (!resp.ok) throw new Error(`Operator API error: ${resp.status}`);
 
         const data = await resp.json();
 
         if (data.type === "message") {
           // Final text response
           setMessages((prev) => prev.filter((m) => m.id !== thinkingId));
-          addMsg("agent", data.content || "（无回复）");
+          addMsg("operator", data.content || "（无回复）");
           break;
         }
 
@@ -235,7 +235,7 @@ export function Copilot() {
           // Show tool call in UI
           const toolNames = data.tool_calls.map((tc: any) => tc.function.name).join(", ");
           setMessages((prev) => prev.filter((m) => m.id !== thinkingId));
-          addMsg("agent", `🔧 正在执行: ${toolNames}`, { status: "tool", toolName: toolNames });
+          addMsg("operator", `🔧 正在执行: ${toolNames}`, { status: "tool", toolName: toolNames });
 
           // Add assistant tool_call message to chat history
           chatMessages.push({
@@ -260,7 +260,7 @@ export function Copilot() {
             if (tc.function.name === "upload_file") {
               setMessages((prev) => [
                 ...prev.filter((m) => m.status !== "tool"),
-                { id: crypto.randomUUID(), role: "agent", content: "请在弹出的文件选择器中选择要上传的文件 📁", status: "done" },
+                { id: crypto.randomUUID(), role: "operator", content: "请在弹出的文件选择器中选择要上传的文件 📁", status: "done" },
               ]);
               setThinking(false);
               return; // Don't continue loop — wait for file selection
@@ -269,15 +269,15 @@ export function Copilot() {
 
           // Show thinking again for next round
           const nextThinkingId = crypto.randomUUID();
-          setMessages((prev) => [...prev, { id: nextThinkingId, role: "agent", content: "", status: "thinking" }]);
+          setMessages((prev) => [...prev, { id: nextThinkingId, role: "operator", content: "", status: "thinking" }]);
           continue;
         }
 
-        throw new Error("Unexpected agent response type");
+        throw new Error("Unexpected response type");
       }
     } catch (e: any) {
       setMessages((prev) => prev.filter((m) => m.id !== thinkingId));
-      addMsg("agent", `❌ 出错了: ${e?.message || "未知错误"}`, { status: "error" });
+      addMsg("operator", `❌ 出错了: ${e?.message || "未知错误"}`, { status: "error" });
     }
     setThinking(false);
   };
@@ -287,21 +287,21 @@ export function Copilot() {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!selectedKbId) { addMsg("agent", "请先选择目标知识库。", { status: "error" }); e.target.value = ""; return; }
+    if (!selectedKbId) { addMsg("operator", "请先选择目标知识库。", { status: "error" }); e.target.value = ""; return; }
 
     addMsg("user", `上传: ${file.name}`, { attachment: { name: file.name, size: file.size, type: "file" } });
     setThinking(true);
-    const agentId = crypto.randomUUID();
-    setMessages((prev) => [...prev, { id: agentId, role: "agent", content: "", status: "thinking" }]);
+    const opId = crypto.randomUUID();
+    setMessages((prev) => [...prev, { id: opId, role: "operator", content: "", status: "thinking" }]);
 
     try {
       const { executeFileUpload } = await import("../../skills/definitions/upload-file/index");
       const result = await executeFileUpload(file, skillCtx);
-      setMessages((prev) => prev.filter((m) => m.id !== agentId));
-      addMsg("agent", result.message, { status: result.success ? "done" : "error" });
+      setMessages((prev) => prev.filter((m) => m.id !== opId));
+      addMsg("operator", result.message, { status: result.success ? "done" : "error" });
     } catch (err: any) {
-      setMessages((prev) => prev.filter((m) => m.id !== agentId));
-      addMsg("agent", `❌ 上传失败: ${err?.message || "未知错误"}`, { status: "error" });
+      setMessages((prev) => prev.filter((m) => m.id !== opId));
+      addMsg("operator", `❌ 上传失败: ${err?.message || "未知错误"}`, { status: "error" });
     }
     setThinking(false);
     e.target.value = "";
@@ -315,34 +315,34 @@ export function Copilot() {
     setUrlInput(""); setUrlTitle(""); setShowUrlForm(false); setAttachOpen(false);
     addMsg("user", `导入链接: ${urlTitle || url.slice(0, 60)}`, { attachment: { name: url, type: "url" } });
 
-    // Use agent for the actual import
-    runAgentDirect(url);
+    // Use operator for the actual import
+    runOperatorDirect(url);
   };
 
   /** Send a direct tool call without user text (for URL form) */
-  const runAgentDirect = async (url: string) => {
+  const runOperatorDirect = async (url: string) => {
     if (!selectedKbId) return;
     const chatMessages: ChatMessage[] = [
-      { role: "system", content: AGENT_SYSTEM },
+      { role: "system", content: OPERATOR_SYSTEM },
       { role: "user", content: `请帮我导入这个链接: ${url}` },
     ];
 
     setThinking(true);
     const tId = crypto.randomUUID();
-    setMessages((prev) => [...prev, { id: tId, role: "agent", content: "", status: "thinking" }]);
+    setMessages((prev) => [...prev, { id: tId, role: "operator", content: "", status: "thinking" }]);
 
     try {
       const resp = await fetch(`${API_BASE}/api/knowledge-bases/${selectedKbId}/agent/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: chatMessages, tools: AGENT_TOOLS }),
+        body: JSON.stringify({ messages: chatMessages, tools: OPERATOR_TOOLS }),
       });
       const data = await resp.json();
 
       setMessages((prev) => prev.filter((m) => m.id !== tId));
 
       if (data.type === "message") {
-        addMsg("agent", data.content || "（无回复）");
+        addMsg("operator", data.content || "（无回复）");
       } else if (data.type === "tool_calls" && data.tool_calls?.length > 0) {
         // Execute tools directly
         chatMessages.push({ role: "assistant", content: null, tool_calls: data.tool_calls });
@@ -356,14 +356,14 @@ export function Copilot() {
         const resp2 = await fetch(`${API_BASE}/api/knowledge-bases/${selectedKbId}/agent/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: chatMessages, tools: AGENT_TOOLS }),
+          body: JSON.stringify({ messages: chatMessages, tools: OPERATOR_TOOLS }),
         });
         const data2 = await resp2.json();
-        addMsg("agent", data2.type === "message" ? (data2.content || "完成") : "已完成导入");
+        addMsg("operator", data2.type === "message" ? (data2.content || "完成") : "已完成导入");
       }
     } catch (e: any) {
       setMessages((prev) => prev.filter((m) => m.id !== tId));
-      addMsg("agent", `❌ 出错了: ${e?.message || ""}`, { status: "error" });
+      addMsg("operator", `❌ 出错了: ${e?.message || ""}`, { status: "error" });
     }
     setThinking(false);
   };
@@ -379,10 +379,10 @@ export function Copilot() {
     const urlMatch = text.match(/(https?:\/\/[^\s]+)/);
     if (urlMatch) {
       addMsg("user", text, { attachment: { name: urlMatch[0], type: "url" } });
-      runAgent(text);
+      runOperator(text);
     } else {
       addMsg("user", text);
-      runAgent(text);
+      runOperator(text);
     }
   };
 
@@ -407,14 +407,14 @@ export function Copilot() {
   return (
     <aside
       ref={panelRef}
-      className={`${styles.copilot} ${collapsed ? styles.collapsed : ""}`}
+      className={`${styles.operator} ${collapsed ? styles.collapsed : ""}`}
       style={collapsed ? undefined : { width: panelWidth, minWidth: panelWidth }}
     >
       {!collapsed && <div className={styles.resizeHandle} onMouseDown={startResize}><span className={styles.resizeGrip} /></div>}
 
       <div className={styles.header}>
-        <div className={styles.title}><Bot size={16} /><strong>Agent</strong><span className={styles.badge}>AI</span></div>
-        <button className={styles.toggleBtn} onClick={toggleCopilot}>{collapsed ? <PanelRightOpen size={18} /> : <PanelRightClose size={18} />}</button>
+        <div className={styles.title}><Bot size={16} /><strong>操作台</strong></div>
+        <button className={styles.toggleBtn} onClick={toggleOperator}>{collapsed ? <PanelRightOpen size={18} /> : <PanelRightClose size={18} />}</button>
       </div>
 
       {!collapsed && (
@@ -456,7 +456,7 @@ export function Copilot() {
           <div className={styles.chatScroll}>
             {messages.length === 0 && <WelcomeScreen />}
             {messages.map((msg) => (
-              <div key={msg.id} className={`${styles.msg} ${msg.role === "user" ? styles.msgUser : styles.msgAgent}`}>
+              <div key={msg.id} className={`${styles.msg} ${msg.role === "user" ? styles.msgUser : styles.msgOperator}`}>
                 <div className={styles.msgAvatar}>{msg.role === "user" ? <User size={14} /> : <Bot size={14} />}</div>
                 <div className={styles.msgBody}>
                   {msg.attachment && (

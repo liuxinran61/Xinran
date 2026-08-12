@@ -1,3 +1,6 @@
+/* ===== GraphView — 知识图谱页样式 =========================================
+   布局: 顶栏 | 滚动区(统计卡片 + 主题侧栏 + 图谱区) | 底栏 */
+
 .center { display: grid; grid-template-rows: var(--kos-topbar-h) 1fr var(--kos-status-h); height: 100vh; overflow: hidden; }
 .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 24px; border-bottom: 1px solid var(--kos-border); background: #fff; }
 .pageTitle { font-size: 18px; font-weight: 700; color: var(--kos-text); }

@@ -1,6 +1,7 @@
-// ===== AI Knowledge OS Web — Type Definitions =====
+// ===== Type Definitions — Knowledge OS 全系统类型 =====
 
-// --- Knowledge Base ---
+// ── Knowledge Base ──────────────────────────────────────
+
 export interface KnowledgeBase {
   id: string;
   name: string;
@@ -12,24 +13,31 @@ export interface KnowledgeBase {
   updated_at: string;
 }
 
-// --- Document ---
+// ── Document ────────────────────────────────────────────
+
+/** 文档解析状态：pending=待处理 → processing=处理中 → completed=已完成 | failed=失败 */
+export type ParseStatus = "pending" | "processing" | "completed" | "failed";
+
+/** 文档 AI 分类结果（由后端 classifier 自动生成） */
+export interface DocumentClassification {
+  scenario: string;      // 业务场景
+  category: string;      // 内容类别
+  severity: string;      // 严重级别
+  confidence: number;    // 置信度 0-1
+  keywords: string[];    // 提取关键词
+  reason: string;        // 分类理由
+}
+
 export interface Document {
   id: string;
   kb_id: string;
   filename: string;
   file_type: string;
   file_size: number;
-  parse_status: "pending" | "processing" | "completed" | "failed";
+  parse_status: ParseStatus;
   chunk_count: number;
   entity_count: number;
-  classification?: {
-    scenario: string;
-    category: string;
-    severity: string;
-    confidence: number;
-    keywords: string[];
-    reason: string;
-  };
+  classification?: DocumentClassification;
   version?: number;
   replaces_doc_id?: string;
   source_url?: string;
@@ -37,39 +45,17 @@ export interface Document {
   created_at: string;
 }
 
-export interface Chunk {
-  id: string;
-  doc_id: string;
-  chunk_index: number;
-  content: string;
-  metadata: Record<string, unknown>;
-}
+// ── RAG / 聊天 ─────────────────────────────────────────
 
-export interface DocumentDetail extends Document {
-  chunks: Chunk[];
-}
-
-// --- RAG ---
+/** 检索来源片段 */
 export interface SourceItem {
   chunk_id: string;
   content: string;
-  score: number;
+  score: number;           // 匹配度 0-1
   document_name: string;
 }
 
-export interface ChatResponse {
-  answer: string;
-  sources: SourceItem[];
-}
-
-export interface SearchResult {
-  chunk_id: string;
-  content: string;
-  score: number;
-  document_name: string;
-}
-
-// --- Chat Session ---
+/** 对话会话 — 一个 KB 下可有多个会话 */
 export interface ChatSession {
   id: string;
   kb_id: string;
@@ -79,7 +65,7 @@ export interface ChatSession {
   updated_at: string;
 }
 
-// --- Conversation ---
+/** 单条对话记录（用户问题 / AI 回答） */
 export interface ConversationItem {
   id: string;
   role: "user" | "assistant";
@@ -90,75 +76,44 @@ export interface ConversationItem {
   created_at: string;
 }
 
-// --- Graph ---
+// ── Knowledge Graph ─────────────────────────────────────
+
+/** ECharts 力导向图节点 */
 export interface GraphNode {
   id: string;
   name: string;
-  type: string;
-  category: number;
-  symbolSize: number;
+  type: string;          // 实体类型
+  category: number;       // 分类索引（对应 categories 数组）
+  symbolSize: number;     // 节点大小 = 关联度
   itemStyle?: { color?: string };
   aliases?: string[];
   properties?: Record<string, unknown>;
 }
 
+/** ECharts 力导向图边 */
 export interface GraphEdge {
-  source: string;
-  target: string;
-  label: string;
-  relation_type: string;
+  source: string;        // 源节点 ID
+  target: string;        // 目标节点 ID
+  label: string;         // 边标签
+  relation_type: string; // 关系类型
 }
 
+/** ECharts 力导向图分类（对应节点的 category 索引） */
 export interface GraphCategory {
   name: string;
   itemStyle?: { color?: string };
 }
 
+/** 完整知识图谱数据 */
 export interface GraphData {
   nodes: GraphNode[];
   edges: GraphEdge[];
   categories: GraphCategory[];
 }
 
-// --- Entity / Relation ---
-export interface Entity {
-  id: string;
-  kb_id: string;
-  name: string;
-  type: EntityType;
-  aliases: string[];
-  properties: Record<string, unknown>;
-}
+// ── System Config ───────────────────────────────────────
 
-export type EntityType =
-  | "person"
-  | "organization"
-  | "concept"
-  | "technology"
-  | "product"
-  | "location"
-  | "event"
-  | "time";
-
-export interface Relation {
-  id: string;
-  kb_id: string;
-  source_entity_id: string;
-  target_entity_id: string;
-  relation_type: string;
-  properties: Record<string, unknown>;
-}
-
-// --- System ---
-export interface SystemStats {
-  kb_count: number;
-  document_count: number;
-  chunk_count: number;
-  entity_count: number;
-  relation_count: number;
-  total_storage_bytes: number;
-}
-
+/** 后端系统配置（GET /api/admin/config） */
 export interface SystemConfig {
   llm_api_base: string;
   llm_model: string;
@@ -167,119 +122,4 @@ export interface SystemConfig {
   chunk_overlap: number;
   rag_top_k: number;
   rag_similarity_threshold: number;
-}
-
-// --- Dashboard ---
-export interface DashboardStats {
-  fileCount: number;
-  linkCount: number;
-  taskCount: number;
-  totalSize: number;
-  orphans: number;
-  inboxCount: number;
-  tagCount: number;
-  density: number;
-}
-
-// --- Inbox ---
-export interface InboxItem {
-  id: string;
-  title: string;
-  content: string;
-  source_type: "quick_note" | "web_capture" | "upload";
-  source_url?: string;
-  tags: string[];
-  category: string;
-  suggestedTags?: string[];
-  is_favorite: boolean;
-  is_archived: boolean;
-  created_at: string;
-}
-
-// --- Project ---
-export interface Project {
-  id: string;
-  kb_id: string;
-  name: string;
-  description: string;
-  status: ProjectStatus;
-  progress: number;
-  due_date?: string;
-  client?: string;
-  summary?: string;
-  tags: string[];
-  owners: string[];
-  taskCount: number;
-  completedTaskCount: number;
-  meetingCount: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export type ProjectStatus = "planning" | "research" | "development" | "active" | "done";
-
-export interface ProjectTask {
-  id: string;
-  project_id: string;
-  content: string;
-  is_completed: boolean;
-  sort_order: number;
-}
-
-export interface ProjectMilestone {
-  id: string;
-  project_id: string;
-  title: string;
-  target_date?: string;
-  is_reached: boolean;
-}
-
-// --- Agent ---
-export interface AgentTemplate {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  system_prompt: string;
-  trigger_keywords: string[];
-  output_format: string;
-  icon: string;
-  color: string;
-}
-
-export interface AgentExecution {
-  id: string;
-  agent_id: string;
-  kb_id: string;
-  status: "pending" | "running" | "done" | "failed";
-  input: string;
-  output: string;
-  created_at: string;
-  completed_at?: string;
-}
-
-// --- Analytics ---
-export interface AnalyticsOverview {
-  totalDocs: number;
-  totalChunks: number;
-  totalEntities: number;
-  totalRelations: number;
-  totalStorage: number;
-  healthScore: number;
-  weekAdded: number;
-}
-
-export interface GapItem {
-  label: string;
-  count: number;
-  suggestion: string;
-}
-
-export interface AnalyticsData {
-  overview: AnalyticsOverview;
-  growthTrend: { date: string; count: number }[];
-  tagDistribution: [string, number][];
-  categoryDistribution: [string, number][];
-  highValueNotes: { name: string; links: number }[];
-  gaps: GapItem[];
 }

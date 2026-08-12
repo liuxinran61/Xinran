@@ -1,4 +1,14 @@
-// ===== Chat Store — sessions + SSE streaming + history =====
+// ===== Chat Store — RAG 对话状态管理（Zustand）============================
+//
+// 核心流程：sendMessage → SSE 流式请求 → 逐 token 更新 streamingContent
+//   → 流完成后拼装 assistantMsg → 重新拉取 DB 消息同步 ID
+//
+// 检索范围限定（互斥）：
+//   - scopedDocId  — 限定到单个文档（点击文档行激活）
+//   - scopedFolderId — 限定到单个文件夹（进入文件夹激活）
+//   设置一个时自动清除另一个
+//
+// 会话管理：自动创建（首条问题前 30 字为标题）、切换、删除
 import { create } from "zustand";
 import { getSessions, createSession, deleteSession, getConversations, deleteConversation, toggleLike } from "../api/client";
 import type { ConversationItem, ChatSession } from "../types";
@@ -51,12 +61,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
   scopedDocId: null,
   scopedDocName: "",
 
+  // ── 切换 KB：清除所有状态，重新加载会话 ──────────
   setKbId: (kbId) => {
     set({ currentKbId: kbId, messages: [], currentSessionId: null, sessions: [], scopedDocId: null, scopedDocName: "", scopedFolderId: null, scopedFolderName: "" });
     // Load sessions async
     get().loadSessions();
   },
 
+  // ── 限定检索到单文档（与 folder 互斥）────────────
   setScopedDoc: (docId, docName) => {
     set({ scopedDocId: docId, scopedDocName: docName || "", scopedFolderId: null, scopedFolderName: "" });
     if (docId) {
@@ -66,6 +78,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
+  // ── 限定检索到单文件夹（与 doc 互斥）─────────────
   setScopedFolder: (folderId, folderName) => {
     set({ scopedFolderId: folderId, scopedFolderName: folderName || "", scopedDocId: null, scopedDocName: "" });
     if (folderId) {
@@ -131,11 +144,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
     } catch { /* ignore */ }
   },
 
+  // ── 核心：发送消息 → SSE 流式接收 ─────────────────
   sendMessage: async (question) => {
     const { currentKbId, currentSessionId, messages, scopedDocId, scopedFolderId } = get();
     if (!currentKbId || !question.trim()) return;
 
-    // Auto-create session if none
+    // 自动创建会话（首条问题前 30 字为标题）
     let sid = currentSessionId;
     if (!sid) {
       try {
@@ -160,6 +174,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     };
     set({ messages: [...messages, userMsg], isLoading: true, streamingContent: "" });
 
+    // ── SSE 流式请求 ──────────────────────────────────
     try {
       const response = await fetch(`${API}/api/knowledge-bases/${currentKbId}/chat/stream`, {
         method: "POST",
@@ -171,6 +186,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           }),
       });
 
+      // ReadableStream 逐行解析 SSE（POST 不能用 EventSource）
       const reader = response.body?.getReader();
       if (!reader) throw new Error("No stream");
 
@@ -187,6 +203,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           if (!line.startsWith("data: ") || line.includes("[DONE]")) continue;
           try {
             const data = JSON.parse(line.slice(6));
+            // SSE 帧格式: {token: "..."}  |  {sources: [...], session_id: "..."}  |  [DONE]
             if (data.token) {
               fullAnswer += data.token;
               set({ streamingContent: fullAnswer });
@@ -212,7 +229,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         streamingContent: "",
       }));
 
-      // Reload sessions to update message counts and re-sync from DB
+      // 流结束后重新拉取：同步 DB 中的消息 ID + 更新会话计数
       const { currentKbId: kbId } = get();
       if (kbId) {
         try {
@@ -251,6 +268,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     } catch { /* best effort */ }
   },
 
+  // ── 点赞（乐观更新 + 失败回滚）───────────────────
   toggleLikeMsg: async (msgId) => {
     const { currentKbId } = get();
     if (!currentKbId) return;

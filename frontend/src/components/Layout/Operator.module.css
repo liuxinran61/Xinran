@@ -1,8 +1,11 @@
-.copilot {
+/* ===== Operator — 知识操作台样式 ===========================================
+   右侧面板 360px，可拖拽调整 280-600px，折叠 44px */
+
+.operator {
   display: flex; flex-direction: column; height: 100vh;
   border-left: 1px solid var(--kos-border);
   background: #fff;
-  width: var(--kos-copilot-w); position: relative;
+  width: var(--kos-operator-w); position: relative;
 }
 
 /* Resize handle — left edge */
@@ -27,7 +30,6 @@
 }
 .title { display: flex; align-items: center; gap: 8px; color: var(--kos-purple); }
 .title strong { font-size: 13px; font-weight: 600; }
-.badge { font-size: 9px; padding: 1px 5px; background: var(--kos-purple-bg); color: var(--kos-purple); border-radius: 3px; font-weight: 500; }
 .toggleBtn {
   display: flex; align-items: center; justify-content: center;
   width: 26px; height: 26px; background: transparent;
@@ -112,7 +114,7 @@
   font-size: 12px; line-height: 1.55;
 }
 .msgUser .msgBody { background: var(--kos-purple); color: #fff; }
-.msgAgent .msgBody { background: var(--kos-panel-soft); border: 1px solid var(--kos-border); color: var(--kos-text); }
+.msgOperator .msgBody { background: var(--kos-panel-soft); border: 1px solid var(--kos-border); color: var(--kos-text); }
 .msgText { white-space: pre-wrap; word-break: break-word; }
 
 /* Attachment in message */
@@ -121,7 +123,7 @@
   padding: 5px 8px; background: rgba(255,255,255,0.15);
   border-radius: 4px; font-size: 11px;
 }
-.msgAgent .attachment { background: rgba(0,0,0,0.04); }
+.msgOperator .attachment { background: rgba(0,0,0,0.04); }
 .attachSize { font-size: 10px; opacity: 0.65; }
 
 .thinking { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--kos-text-muted); font-style: italic; }
@@ -211,7 +213,7 @@
 .spin { animation: spin 1s linear infinite; }
 @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 
-.collapsed { width: var(--kos-copilot-collapsed-w); }
+.collapsed { width: var(--kos-operator-collapsed-w); }
 .collapsed .header { justify-content: center; padding: 14px 0; }
 .collapsed .kbBar, .collapsed .chatScroll, .collapsed .composer, .collapsed .urlForm,
-.collapsed .title strong, .collapsed .badge { display: none; }
+.collapsed .title strong { display: none; }

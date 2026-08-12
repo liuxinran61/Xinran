@@ -53,15 +53,18 @@ class URLImportRequest(BaseModel):
     url: str = Field(..., min_length=5); title: str = ""
 
 class DocumentUpdateRequest(BaseModel):
-    """Partial update supported: folder_id (move) and filename (rename)."""
+    """Partial update supported: folder_id (move), filename (rename), tags, description."""
     folder_id: Optional[UUID] = None
     filename: Optional[str] = None
+    tags: Optional[List[str]] = None
+    description: Optional[str] = None
 
 class DocumentResponse(BaseModel):
     id: UUID; kb_id: UUID; filename: str; file_type: str
     file_size: int; parse_status: str; chunk_count: int; entity_count: int
     classification: Optional[dict] = None; version: Optional[int] = None
     replaces_doc_id: Optional[UUID] = None; folder_id: Optional[UUID] = None
+    tags: List[str] = []; description: Optional[str] = None
     created_at: datetime
     class Config: from_attributes = True
 

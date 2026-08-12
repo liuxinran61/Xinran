@@ -5,7 +5,7 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.models.models import KnowledgeBase, Document, Entity
-from app.schemas.schemas import KBCreate, KBUpdate, KBResponse
+from app.schemas.schemas import KBCreate, KBUpdate
 
 router = APIRouter(prefix="/api/knowledge-bases", tags=["Knowledge Bases"])
 
@@ -21,13 +21,14 @@ async def _to_response(kb: KnowledgeBase, db) -> dict:
         "created_at": kb.created_at, "updated_at": kb.updated_at,
     }
 
+
 @router.get("")
-async def list_kbs(visibility: str = None, db: AsyncSession = Depends(get_db)):
+async def list_kbs(db: AsyncSession = Depends(get_db)):
     q = select(KnowledgeBase).order_by(KnowledgeBase.updated_at.desc())
-    if visibility: q = q.where(KnowledgeBase.visibility == visibility)
     result = await db.execute(q)
     kbs = result.scalars().all()
     return [await _to_response(kb, db) for kb in kbs]
+
 
 @router.get("/{kb_id}")
 async def get_kb(kb_id: UUID, db: AsyncSession = Depends(get_db)):
@@ -35,12 +36,14 @@ async def get_kb(kb_id: UUID, db: AsyncSession = Depends(get_db)):
     if not kb: raise HTTPException(status_code=404)
     return await _to_response(kb, db)
 
+
 @router.post("", status_code=201)
 async def create_kb(data: KBCreate, db: AsyncSession = Depends(get_db)):
     kb = KnowledgeBase(name=data.name, description=data.description, icon=data.icon,
                        visibility=data.visibility, join_mode=data.join_mode)
     db.add(kb); await db.flush(); await db.refresh(kb)
     return await _to_response(kb, db)
+
 
 @router.patch("/{kb_id}")
 async def update_kb(kb_id: UUID, data: KBUpdate, db: AsyncSession = Depends(get_db)):
@@ -54,6 +57,7 @@ async def update_kb(kb_id: UUID, data: KBUpdate, db: AsyncSession = Depends(get_
     if data.cover_image is not None: kb.cover_image = data.cover_image
     await db.flush()
     return await _to_response(kb, db)
+
 
 @router.delete("/{kb_id}", status_code=204)
 async def delete_kb(kb_id: UUID, db: AsyncSession = Depends(get_db)):

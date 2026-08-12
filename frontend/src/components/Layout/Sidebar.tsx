@@ -1,4 +1,18 @@
-// ===== Sidebar - Feishu Style =====
+// ===== Sidebar — 侧边导航栏（220px 固定宽度）================================
+//
+// 结构（从上到下）：
+//   1. 品牌 Logo（双菱形 CSS 绘制）+ "Knowledge OS" 标题
+//   2. 个人知识库分组（折叠手风琴 + + 创建按钮）
+//   3. 共享知识库分组（同上）
+//   4. 分割线
+//   5. 知识图谱入口（GitFork 图标）
+//   6. 设置入口（Settings 图标）
+//
+// 交互：
+//   - KB 分组可折叠/展开（ChevronRight 旋转动画）
+//   - 新建 KB 用浏览器 prompt() 输入名称
+//   - 活跃 KB 项有紫色左边框 + 浅色背景
+//   - 响应式：≤1180px 折叠为 56px 纯图标模式
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import clsx from "clsx";

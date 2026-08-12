@@ -1,5 +1,10 @@
 /* ===== Feishu-Style Global Styles ===== */
+/* ===== 全局样式 ============================================================
+   引入设计 tokens，重置浏览器默认样式，定义通用组件类 */
+
 @import "./design-tokens.css";
+
+/* ── Reset ────────────────────────────────────────────── */
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -13,19 +18,19 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-::-webkit-scrollbar { width: 5px; height: 5px; }
+/* ── 滚动条 ─────────────────────────────────────────── */ width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #d0d4da; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #b0b4ba; }
 
-::selection { background: rgba(51,112,255,0.12); }
+/* ── 文本选择 & 焦点 ──────────────────────────────── */
 
 :focus-visible { outline: 2px solid var(--kos-purple); outline-offset: 1px; }
 
 a { color: var(--kos-purple); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
-/* ===== Feishu-Style Shared Components ===== */
+/* ===== 公共组件类（kos-* 命名空间）=============================== */
 
 .kos-panel {
   background: var(--kos-panel);

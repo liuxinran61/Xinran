@@ -1,7 +1,16 @@
-// ===== Settings View =====
+// ===== Settings View — 系统配置页面 ======================================
+//
+// 四组表单：
+//   1. LLM 大模型：API Base URL + 模型名称 + API Key（只读脱敏）
+//   2. Embedding 嵌入：模型名称（只读，本地 sentence-transformers）
+//   3. 文档分块：Chunk Size (128-4096) + Overlap (0-512)
+//   4. RAG 检索：Top K (1-50) + 相似度阈值 (0-1)
+//
+// 配置加载：GET /api/admin/config → 失败则 fallback 到 DEFAULTS
+// 保存：前端模拟（setTimeout 500ms），不请求后端
 import { useState, useEffect } from "react";
 import { getConfig } from "../../api/client";
-import { Save, Brain, Scissors, Search as SearchIcon, Globe, Cpu, Zap, Database } from "lucide-react";
+import { Save, Zap } from "lucide-react";
 import type { SystemConfig } from "../../types";
 import styles from "./SettingsView.module.css";
 
@@ -41,123 +50,88 @@ export function SettingsView() {
 
   return (
     <div className={styles.wrapper}>
-      <div className={styles.scroll}>
-        <div className={styles.header}>
-          <h1>系统设置</h1>
-          <p>配置 LLM 大模型、Embedding、文档分块与 RAG 检索参数</p>
+      <h1 className={styles.title}>系统设置</h1>
+
+      <div className={styles.form}>
+        {/* ── LLM ── */}
+        <div className={styles.group}>
+          <h2 className={styles.groupTitle}>LLM 大模型</h2>
+          <div className={styles.row}>
+            <label>API Base URL</label>
+            <input type="text" value={config.llm_api_base}
+              onChange={(e) => update("llm_api_base", e.target.value)}
+              placeholder="https://api.openai.com/v1" />
+          </div>
+          <div className={styles.row}>
+            <label>模型</label>
+            <input type="text" value={config.llm_model}
+              onChange={(e) => update("llm_model", e.target.value)}
+              placeholder="gpt-4o-mini" />
+          </div>
+          <div className={styles.row}>
+            <label>API Key</label>
+            <input type="password" value="sk-••••••••••••••••" readOnly />
+            <span className={styles.hint}>修改 Key 请编辑 backend/.env 后重启</span>
+          </div>
         </div>
 
-        <div className={styles.grid}>
-          {/* LLM */}
-          <section className={styles.card}>
-            <div className={styles.cardHead}>
-              <Brain size={18} />
-              <h3>LLM 大模型</h3>
-            </div>
-            <div className={styles.cardBody}>
-              <div className={styles.field}>
-                <label>API Base URL</label>
-                <div className={styles.inputIcon}>
-                  <Globe size={14} />
-                  <input type="text" value={config.llm_api_base}
-                    onChange={(e) => update("llm_api_base", e.target.value)}
-                    placeholder="https://api.openai.com/v1" />
-                </div>
-              </div>
-              <div className={styles.field}>
-                <label>模型</label>
-                <div className={styles.inputIcon}>
-                  <Cpu size={14} />
-                  <input type="text" value={config.llm_model}
-                    onChange={(e) => update("llm_model", e.target.value)}
-                    placeholder="gpt-4o-mini" />
-                </div>
-              </div>
-              <div className={styles.field}>
-                <label>API Key</label>
-                <input type="password" value="sk-••••••••••••••••" readOnly className={styles.readonly} />
-                <span className={styles.hint}>修改 Key 请编辑 backend/.env 文件后重启</span>
-              </div>
-            </div>
-          </section>
-
-          {/* Embedding */}
-          <section className={styles.card}>
-            <div className={styles.cardHead}>
-              <Database size={18} />
-              <h3>Embedding 嵌入</h3>
-            </div>
-            <div className={styles.cardBody}>
-              <div className={styles.field}>
-                <label>模型</label>
-                <div className={styles.inputIcon}>
-                  <Cpu size={14} />
-                  <input type="text" value={config.embedding_model} readOnly className={styles.readonly} />
-                </div>
-                <span className={styles.hint}>当前使用本地 sentence-transformers，通过 .env 切换 API 模式</span>
-              </div>
-            </div>
-          </section>
-
-          {/* Chunking */}
-          <section className={styles.card}>
-            <div className={styles.cardHead}>
-              <Scissors size={18} />
-              <h3>文档分块</h3>
-            </div>
-            <div className={styles.cardBody}>
-              <div className={styles.fieldRow}>
-                <div className={styles.field}>
-                  <label>Chunk Size</label>
-                  <input type="number" value={config.chunk_size}
-                    onChange={(e) => update("chunk_size", Number(e.target.value))} min={128} max={4096} />
-                  <span className={styles.hint}>每块最大字符数，建议 512</span>
-                </div>
-                <div className={styles.field}>
-                  <label>Overlap</label>
-                  <input type="number" value={config.chunk_overlap}
-                    onChange={(e) => update("chunk_overlap", Number(e.target.value))} min={0} max={512} />
-                  <span className={styles.hint}>相邻块重叠字符，建议 50</span>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* RAG */}
-          <section className={styles.card}>
-            <div className={styles.cardHead}>
-              <SearchIcon size={18} />
-              <h3>RAG 检索</h3>
-            </div>
-            <div className={styles.cardBody}>
-              <div className={styles.fieldRow}>
-                <div className={styles.field}>
-                  <label>Top K</label>
-                  <input type="number" value={config.rag_top_k}
-                    onChange={(e) => update("rag_top_k", Number(e.target.value))} min={1} max={50} />
-                  <span className={styles.hint}>每次检索返回的文档块数</span>
-                </div>
-                <div className={styles.field}>
-                  <label>相似度阈值</label>
-                  <input type="number" value={config.rag_similarity_threshold}
-                    onChange={(e) => update("rag_similarity_threshold", Number(e.target.value))}
-                    step={0.05} min={0} max={1} />
-                  <span className={styles.hint}>低于此值的结果会被过滤</span>
-                </div>
-              </div>
-            </div>
-          </section>
+        {/* ── Embedding ── */}
+        <div className={styles.group}>
+          <h2 className={styles.groupTitle}>Embedding 嵌入</h2>
+          <div className={styles.row}>
+            <label>模型</label>
+            <input type="text" value={config.embedding_model} readOnly />
+            <span className={styles.hint}>本地 sentence-transformers，通过 .env 切换</span>
+          </div>
         </div>
 
-        <div className={styles.saveRow}>
-          <button className={styles.saveBtn} onClick={handleSave} disabled={saving}>
-            <Save size={16} />
-            {saving ? "保存中..." : saved ? "✓ 已保存" : "保存设置"}
-          </button>
-          <span className={styles.status}>
-            <Zap size={12} /> 当前模型: {config.llm_model}
-          </span>
+        {/* ── 文档分块 ── */}
+        <div className={styles.group}>
+          <h2 className={styles.groupTitle}>文档分块</h2>
+          <div className={styles.row}>
+            <label>Chunk Size</label>
+            <input type="number" value={config.chunk_size}
+              onChange={(e) => update("chunk_size", Number(e.target.value))}
+              min={128} max={4096} />
+            <span className={styles.hint}>每块最大字符数</span>
+          </div>
+          <div className={styles.row}>
+            <label>Overlap</label>
+            <input type="number" value={config.chunk_overlap}
+              onChange={(e) => update("chunk_overlap", Number(e.target.value))}
+              min={0} max={512} />
+            <span className={styles.hint}>相邻块重叠字符数</span>
+          </div>
         </div>
+
+        {/* ── RAG ── */}
+        <div className={styles.group}>
+          <h2 className={styles.groupTitle}>RAG 检索</h2>
+          <div className={styles.row}>
+            <label>Top K</label>
+            <input type="number" value={config.rag_top_k}
+              onChange={(e) => update("rag_top_k", Number(e.target.value))}
+              min={1} max={50} />
+            <span className={styles.hint}>每次检索返回的块数</span>
+          </div>
+          <div className={styles.row}>
+            <label>相似度阈值</label>
+            <input type="number" value={config.rag_similarity_threshold}
+              onChange={(e) => update("rag_similarity_threshold", Number(e.target.value))}
+              step={0.05} min={0} max={1} />
+            <span className={styles.hint}>低于此值的结果被过滤</span>
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.footer}>
+        <button className={styles.saveBtn} onClick={handleSave} disabled={saving}>
+          <Save size={14} />
+          {saving ? "保存中..." : saved ? "✓ 已保存" : "保存设置"}
+        </button>
+        <span className={styles.status}>
+          <Zap size={12} /> {config.llm_model}
+        </span>
       </div>
     </div>
   );

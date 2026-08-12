@@ -1,3 +1,7 @@
+/* ===== KBDetail View — 知识库详情页样式 ==================================
+   核心布局: Grid 三行（顶栏 | 主体 | 底栏）
+   7 列 Grid 表格: 复选框 32px | 图标 28px | 名称 1fr | 类型 70px | 大小 60px | 状态 80px | 操作 100px */
+
 .center { display: grid; grid-template-rows: var(--kos-topbar-h) 1fr var(--kos-status-h); height: 100vh; overflow: hidden; }
 .topbar { display: flex; align-items: center; gap: 14px; padding: 0 24px; border-bottom: 1px solid var(--kos-border); background: #fff; }
 .topbar h2 { font-size: 16px; font-weight: 600; color: var(--kos-text); }
@@ -46,15 +50,24 @@
 .importBtn { display: inline-flex; align-items: center; gap: 4px; padding: 6px 14px; font-family: var(--kos-font); font-size: var(--kos-type-body); color: var(--kos-text-soft); background: #fff; border: 1px solid var(--kos-border); border-radius: var(--kos-radius-sm); cursor: pointer; }
 .importBtn:hover { border-color: var(--kos-purple); color: var(--kos-purple); }
 .tableCard { background: #fff; border: 1px solid var(--kos-border); border-radius: var(--kos-radius); overflow: hidden; margin: 0 24px 20px; }
-.tableRow { display: grid; grid-template-columns: 36px 1fr 70px 80px 90px 60px; gap: 8px; padding: 12px 18px; font-size: var(--kos-type-body); align-items: center; border-bottom: 1px solid var(--kos-border); cursor: pointer; }
+.tableHeader { background: #fafbfc; border-bottom: 2px solid var(--kos-border); cursor: default; font-size: 11px; color: var(--kos-text-muted); text-transform: none; font-weight: 600; }
+.tableHeader:hover { background: #fafbfc; }
+.tableRow { display: grid; grid-template-columns: 32px 28px 1fr 70px 60px 80px 100px; gap: 4px; padding: 10px 16px; font-size: var(--kos-type-body); align-items: center; border-bottom: 1px solid var(--kos-border); cursor: pointer; }
 .tableRow:last-child { border-bottom: none; }
 .tableRow:hover { background: var(--kos-purple-bg); }
+.colCheck { display: flex; align-items: center; justify-content: center; color: var(--kos-text-muted); cursor: pointer; }
+.colCheck:hover { color: var(--kos-purple); }
 .colIcon { display: flex; align-items: center; justify-content: center; color: var(--kos-text-muted); }
 .colName { display: flex; align-items: center; gap: 6px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 500; }
 .colType, .colSize { font-size: 11px; color: var(--kos-text-muted); }
 .colStatus { font-size: 11px; }
+.colActions { display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
+.previewBtn { display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; background: transparent; border: none; border-radius: 4px; color: var(--kos-text-muted); cursor: pointer; }
+.previewBtn:hover { color: var(--kos-purple); background: var(--kos-purple-bg); }
 .statusDone { color: var(--kos-green); }
 .statusPending { color: var(--kos-text-muted); }
+.rowSelected { background: #eef1ff !important; }
+.rowSelected:hover { background: #e0e4ff !important; }
 .emptyRow { display: flex; flex-direction: column; align-items: center; padding: 40px; color: var(--kos-text-muted); gap: 8px; }
 .faqSection { background: #fff; border: 1px solid var(--kos-border); border-radius: var(--kos-radius); padding: 16px 18px; margin: 0 24px 20px; }
 .faqHeader { display: flex; align-items: center; gap: 6px; margin-bottom: 12px; }
@@ -149,9 +162,58 @@
 .cursor { animation: blink 0.7s infinite; color: var(--kos-purple); }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 
-.rowActions { display: flex; gap: 4px; position: relative; }
-.rowActions button { display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; background: transparent; border: none; border-radius: 4px; color: var(--kos-text-muted); cursor: pointer; }
-.rowActions button:hover { color: var(--kos-purple); background: var(--kos-purple-bg); }
+/* ── Selection count in topbar ── */
+.selectionCount { font-size: 12px; color: var(--kos-purple); font-weight: 500; }
+.selectionCount button { font-family: var(--kos-font); font-size: 12px; color: var(--kos-text-muted); background: transparent; border: none; cursor: pointer; text-decoration: underline; padding: 0 2px; }
+
+/* ── Hover tooltip ── */
+.hoverTooltip {
+  background: #fff; border: 1px solid var(--kos-border);
+  border-radius: var(--kos-radius-sm); box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+  padding: 12px 14px; min-width: 220px; max-width: 340px;
+  font-size: 12px; pointer-events: none;
+}
+.tooltipTitle { font-weight: 600; font-size: 13px; color: var(--kos-text); margin-bottom: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tooltipRow { display: flex; justify-content: space-between; align-items: center; padding: 2px 0; color: var(--kos-text-soft); }
+.tooltipLabel { color: var(--kos-text-muted); font-size: 11px; margin-right: 12px; }
+.tooltipTags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--kos-border); }
+.tooltipTag { padding: 1px 6px; font-size: 10px; background: var(--kos-purple-bg); color: var(--kos-purple); border-radius: 3px; }
+
+/* ── Context menu ── */
+.contextMenu {
+  background: #fff; border: 1px solid var(--kos-border);
+  border-radius: var(--kos-radius-sm); box-shadow: 0 8px 32px rgba(0,0,0,0.14);
+  min-width: 170px; max-width: 260px; overflow: hidden;
+}
+.contextMenuHeader {
+  padding: 8px 14px; font-size: 11px; font-weight: 600;
+  color: var(--kos-text-muted); background: #fafbfc;
+  border-bottom: 1px solid var(--kos-border);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.contextMenuItem {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; padding: 8px 14px;
+  font-family: var(--kos-font); font-size: 13px;
+  color: var(--kos-text); background: transparent;
+  border: none; cursor: pointer; text-align: left;
+}
+.contextMenuItem:hover { background: var(--kos-purple-bg); color: var(--kos-purple); }
+.contextMenuSep { height: 1px; background: var(--kos-border); margin: 2px 0; }
+.contextMenuDanger { color: var(--kos-red) !important; }
+.contextMenuDanger:hover { background: rgba(245,63,63,0.08) !important; }
+
+/* ── Tag indicators in table rows ── */
+.tagDots { display: flex; gap: 3px; align-items: center; overflow: hidden; }
+.tagDot { padding: 0 5px; font-size: 10px; background: var(--kos-purple-bg); color: var(--kos-purple); border-radius: 3px; white-space: nowrap; max-width: 60px; overflow: hidden; text-overflow: ellipsis; }
+.tagMore { font-size: 10px; color: var(--kos-text-muted); }
+
+/* ── Tag editing modal ── */
+.tagList { display: flex; flex-wrap: wrap; gap: 6px; min-height: 32px; }
+.tagChip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; font-size: 12px; background: var(--kos-purple-bg); color: var(--kos-purple); border-radius: 4px; }
+.tagChip button { display: flex; align-items: center; justify-content: center; width: 14px; height: 14px; padding: 0; background: transparent; border: none; color: inherit; cursor: pointer; border-radius: 2px; }
+.tagChip button:hover { background: rgba(0,0,0,0.1); }
+.tagEmpty { font-size: 12px; color: var(--kos-text-muted); }
 
 /* Preview modal */
 .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; z-index: 200; }
@@ -174,25 +236,7 @@
 .dropdownItem:hover { background: var(--kos-purple-bg); color: var(--kos-purple); }
 .dropdownItem input[type="file"] { display: none; }
 
-/* ── Move-to-folder dropdown ────────────────────────── */
-.moveWrap { position: relative; }
-.moveDropdown {
-  position: absolute; top: 100%; right: 0; margin-top: 4px;
-  background: #fff; border: 1px solid var(--kos-border);
-  border-radius: var(--kos-radius-sm); box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-  z-index: 60; min-width: 180px; max-height: 240px; overflow-y: auto;
-}
-.moveItem {
-  display: flex; align-items: center; gap: 7px;
-  width: 100%; padding: 7px 12px;
-  font-family: var(--kos-font); font-size: 12px;
-  color: var(--kos-text); background: transparent; border: none;
-  cursor: pointer; text-align: left; white-space: nowrap;
-}
-.moveItem:hover { background: var(--kos-purple-bg); color: var(--kos-purple); }
-.moveItemChild { padding-left: 28px; }
-
-/* ── Document scope ────────────────────────────────── */
+/* ── Folder scope (reuses tableRowScoped) ───────────── */
 .tableRowScoped {
   background: var(--kos-purple-bg) !important;
   border-left: 3px solid var(--kos-purple);
@@ -216,5 +260,3 @@
   color: inherit; cursor: pointer;
 }
 .scopeBadgeClose:hover { background: rgba(0,0,0,0.08); }
-
-/* ── Folder scope (reuses tableRowScoped) ───────────── */

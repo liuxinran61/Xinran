@@ -1,3 +1,6 @@
+/* ===== Toast — 通知提示样式 ===============================================
+   固定在右上角，三种状态色：success(绿) / error(红) / info(蓝) */
+
 .container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
 .toast { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-radius: var(--kos-radius-sm); font-size: var(--kos-type-body); box-shadow: 0 4px 16px rgba(0,0,0,0.1); pointer-events: auto; animation: slideIn 0.2s ease; min-width: 260px; }
 .toast span { flex: 1; }

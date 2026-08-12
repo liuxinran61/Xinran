@@ -47,6 +47,11 @@ class Settings(BaseSettings):
     rag_enable_query_expansion: bool = False   # extra LLM call for query variants
     rag_enable_reranker: bool = False          # local CrossEncoder CPU inference
 
+    # Auth
+    jwt_secret: str = "change-me-to-a-random-secret"
+    jwt_algorithm: str = "HS256"
+    jwt_expire_hours: int = 72
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

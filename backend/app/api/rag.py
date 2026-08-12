@@ -11,7 +11,7 @@ from sqlalchemy import select, func, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.models.models import Conversation, ChatSession
+from app.models.models import Conversation, ChatSession, KnowledgeBase
 from app.schemas.schemas import (
     ChatRequest, ChatResponse, SearchRequest, SearchResponse,
     CreateSessionRequest, SessionResponse, ConversationResponse,
@@ -26,6 +26,11 @@ router = APIRouter(prefix="/api/knowledge-bases", tags=["RAG"])
 
 
 # ── helpers ──────────────────────────────────────────────────
+
+async def _verify_kb_owner(kb_id: UUID, db: AsyncSession):
+    kb = (await db.execute(select(KnowledgeBase).where(KnowledgeBase.id == kb_id))).scalar_one_or_none()
+    if not kb: raise HTTPException(404, "知识库不存在")
+    return kb
 
 async def _save_conversation(db: AsyncSession, kb_id: UUID, session_id: UUID,
                              role: str, content: str, sources: list = None):
@@ -195,7 +200,8 @@ async def get_liked_conversations(kb_id: UUID, db: AsyncSession = Depends(get_db
 @router.post("/{kb_id}/chat/stream")
 async def chat_stream(kb_id: UUID, req: ChatRequest, db: AsyncSession = Depends(get_db)):
     """RAG chat with SSE streaming — now persists conversations."""
-    rag = RAGService()
+    await _verify_kb_owner(kb_id, db)
+    rag = RAGService(user_api_key=None, user_model=None)
     sources = await rag.retrieve(db, kb_id, req.question, req.top_k, doc_id=req.doc_id, folder_id=req.folder_id)
 
     # Resolve or create session
@@ -250,7 +256,8 @@ async def chat_stream(kb_id: UUID, req: ChatRequest, db: AsyncSession = Depends(
 @router.post("/{kb_id}/chat", response_model=ChatResponse)
 async def chat(kb_id: UUID, req: ChatRequest, db: AsyncSession = Depends(get_db)):
     """RAG chat (non-streaming) with persistence."""
-    rag = RAGService()
+    await _verify_kb_owner(kb_id, db)
+    rag = RAGService(user_api_key=None, user_model=None)
     result = await rag.chat(db, kb_id, req.question, req.top_k, doc_id=req.doc_id, folder_id=req.folder_id)
 
     # Resolve/create session
@@ -274,6 +281,7 @@ async def chat(kb_id: UUID, req: ChatRequest, db: AsyncSession = Depends(get_db)
 @router.post("/{kb_id}/search", response_model=SearchResponse)
 async def search(kb_id: UUID, req: SearchRequest, db: AsyncSession = Depends(get_db)):
     """Vector search only — retrieve relevant chunks without generation."""
+    await _verify_kb_owner(kb_id, db)
     rag = RAGService()
     sources = await rag.retrieve(db, kb_id, req.query, req.top_k, doc_id=req.doc_id, folder_id=req.folder_id)
     return SearchResponse(results=[
@@ -290,11 +298,9 @@ async def search(kb_id: UUID, req: SearchRequest, db: AsyncSession = Depends(get
 # ── Agent ──────────────────────────────────────────────────────
 
 @router.post("/{kb_id}/agent/chat")
-async def agent_chat(kb_id: UUID, req: AgentRequest):
-    """Agent endpoint — proxies messages + tools to DeepSeek, returns raw response.
-    The frontend drives the agent loop: it sends messages, gets back either
-    text or tool_calls, executes tools locally, and calls again.
-    """
+async def agent_chat(kb_id: UUID, req: AgentRequest, db: AsyncSession = Depends(get_db)):
+    """Agent endpoint — proxies messages + tools to DeepSeek, returns raw response."""
+    await _verify_kb_owner(kb_id, db)
     settings = get_settings()
     client = AsyncOpenAI(
         base_url=settings.llm_api_base,

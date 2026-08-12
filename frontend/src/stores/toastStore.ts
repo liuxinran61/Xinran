@@ -1,4 +1,7 @@
-// ===== Toast Store =====
+// ===== Toast Store — 全局通知提示（Zustand）===============================
+//
+// 三种类型：success（3s）/ error（4s）/ info（3s）
+// 自动消失，手动可 dismiss
 import { create } from "zustand";
 
 export type ToastType = "success" | "error" | "info";

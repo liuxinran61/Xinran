@@ -89,6 +89,8 @@ class Document(Base):
     folder_id = Column(UUID(as_uuid=True), ForeignKey("folders.id", ondelete="SET NULL"), nullable=True)
     version = Column(Integer, default=1)
     replaces_doc_id = Column(UUID(as_uuid=True), nullable=True)  # points to old doc this replaces
+    tags = Column(JSON, default=list)  # user-editable tags/labels: ["tag1", "tag2"]
+    description = Column(Text, nullable=True)  # user-editable description shown in tooltip
     created_at = Column(DateTime, default=datetime.utcnow)
 
     knowledge_base = relationship("KnowledgeBase", back_populates="documents")

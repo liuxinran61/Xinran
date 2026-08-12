@@ -1,0 +1,261 @@
+{
+  "feature": "knowledge-os-full-app",
+  "mode": "standalone",
+  "doc_language": "zh",
+  "scope": {
+    "strategy": "whole-project",
+    "base": null,
+    "range": null,
+    "paths": [
+      "frontend/src/",
+      "backend/app/"
+    ]
+  },
+  "sessions": [],
+  "branch": null,
+  "date": "2026-08-12",
+  "designer": "实际代码库 → PRD 转换",
+  "bundle_path": "prd/2026-08-12-knowledge-os/",
+  "lark": {
+    "doc_token": null,
+    "url": null,
+    "doc_language": "zh",
+    "source_markdown": "feishu-doc.md",
+    "block_map": {}
+  },
+  "changes": [
+    {
+      "id": "C1",
+      "prd_order": 1,
+      "impl_order": 1,
+      "depends_on": [],
+      "title": "应用壳层与三列布局导航",
+      "intent": "全站统一的 AppLayout 三列布局：左侧 220px Sidebar 深色导航（个人/共享 KB 折叠分组 + 知识图谱 + 设置），中间主内容区通过 React Router Outlet 切换，右侧 Operator 全局智能导入面板",
+      "why": "用户需要跨知识库快速导航，固定侧边栏比顶部 Tab 容纳更多条目，折叠分组区分个人与共享 KB",
+      "why_source": "inferred",
+      "files": [
+        "frontend/src/components/Layout/AppLayout.tsx",
+        "frontend/src/components/Layout/AppLayout.module.css",
+        "frontend/src/components/Layout/Sidebar.tsx",
+        "frontend/src/components/Layout/Sidebar.module.css",
+        "frontend/src/components/Layout/Operator.tsx",
+        "frontend/src/components/Layout/Operator.module.css",
+        "frontend/src/stores/uiStore.ts",
+        "frontend/src/App.tsx"
+      ],
+      "acceptance_seed": [
+        "AppLayout 三列布局：左侧 Sidebar 220px、中间 Outlet flex、右侧 Operator 面板",
+        "Sidebar 显示品牌 Logo（双菱形 CSS 绘制）+ Knowledge OS 标题",
+        "个人知识库组和共享知识库组各自独立折叠/展开，显示每 KB 的文档数量",
+        "每个分组标题旁有 + 按钮（悬停可见），点击弹出 prompt 创建 KB",
+        "底部固定：知识图谱入口（GitFork 图标）、设置入口（Settings 图标）",
+        "响应式断点：>1180px 完整展开、930-1180px 折叠为图标、<760px 移动布局",
+        "侧边栏在所有页面持续可见，不可关闭"
+      ]
+    },
+    {
+      "id": "C2",
+      "prd_order": 2,
+      "impl_order": 2,
+      "depends_on": ["C1"],
+      "title": "KB 详情 — 文件浏览器（文件夹导航 + 文件列表）",
+      "intent": "进入 KB 后展示面包屑导航 + 文件夹/文件统一表格列表。文件夹可点击进入子目录，面包屑同步更新。支持上传文件（本地文档/图片/音视频/网页链接）、新建文件夹、搜索过滤。",
+      "why": "用户需要浏览、管理知识库内的文件和文件夹，面包屑让用户清楚在层级中的位置，搜索框实时过滤降低查找成本",
+      "why_source": "inferred",
+      "files": [
+        "frontend/src/views/KBDetail/KBDetailView.tsx",
+        "frontend/src/views/KBDetail/KBDetailView.module.css",
+        "backend/app/api/kb.py",
+        "backend/app/api/documents.py",
+        "backend/app/api/folders.py"
+      ],
+      "acceptance_seed": [
+        "面包屑导航显示 '全部文件' 按钮和当前文件夹路径（以 > 分隔）",
+        "文件夹和文件在同一表格中展示，7 列：复选框/图标/名称/类型/大小/状态/操作",
+        "7 列精确对齐：32px | 28px | 1fr | 70px | 60px | 80px | 100px",
+        "文件夹名称可点击进入子目录，面包屑同步更新，文件夹行显示子目录数和文件数",
+        "上传按钮展开下拉菜单：文档/图片/音视频/网页链接 四个入口",
+        "支持文件格式：PDF/DOCX/XLSX/CSV/TXT/MD/PPTX/PNG/JPG/MP3/MP4 等 30+ 种",
+        "状态列显示解析进度：绿色=已完成/分类完成，灰色=待处理/处理中/失败",
+        "文件列表前端搜索过滤文件名（不请求后端）",
+        "所有数据 5 秒自动轮询刷新",
+        "顶部栏显示 KB 名称、可见性标签（蓝色胶囊）、文档总数",
+        "底部状态栏：可见性 · 文档数 · FAQ 数 · 当前会话名"
+      ]
+    },
+    {
+      "id": "C3",
+      "prd_order": 3,
+      "impl_order": 3,
+      "depends_on": ["C2"],
+      "title": "KB 详情 — 文件交互（悬停提示、右键菜单、多选批量操作）",
+      "intent": "鼠标悬停文件弹出详细 Tooltip 元数据卡；右键/双击文件弹出上下文菜单（重命名/标签/移动/复制/删除）；复选框支持多选批量操作；标签编辑弹窗；预览弹窗",
+      "why": "桌面端用户期望类文件管理器的交互体验——Tooltip 快速预览元数据、右键菜单高效操作、多选批量减少重复劳动。这些都是桌面端文件管理的基线体验。",
+      "why_source": "inferred",
+      "files": [
+        "frontend/src/views/KBDetail/KBDetailView.tsx",
+        "frontend/src/views/KBDetail/KBDetailView.module.css"
+      ],
+      "acceptance_seed": [
+        "鼠标悬停文件行弹出深色半透明 Tooltip（背景 #2d2d2d），跟随鼠标移动",
+        "Tooltip 显示：文件名（加粗）、类型、大小、上传时间、解析状态、AI 分类结果（场景·类别·严重度）、用户标签",
+        "右键/双击文件弹出白色上下文菜单（圆角 8px，阴影），菜单位置不超出视口",
+        "单文件菜单：重命名、编辑标签、分隔线、移动到、复制到、分隔线、删除（红色）",
+        "多选文件菜单（≥2 项选中）：移动到、复制到、批量删除",
+        "文件夹菜单：重命名、删除",
+        "菜单顶部显示标题栏（单文件=文件名，多选='已选 N 项'）",
+        "表头复选框可全选/取消全选当前可见项",
+        "勾选任意项后顶部栏显示 '已选 N 项 · 取消'",
+        "重命名弹窗：输入新名称 + 确定/取消",
+        "编辑标签弹窗：已有标签胶囊列表（可 × 删除）+ 输入框添加新标签（回车添加）+ 保存",
+        "预览弹窗：文档内容分块拼接展示（Markdown 纯文本渲染），PDF 有特殊提示",
+        "批量 移动/复制：弹出文件夹选择器（根目录 + 所有文件夹层级缩进列表）"
+      ]
+    },
+    {
+      "id": "C4",
+      "prd_order": 4,
+      "impl_order": 4,
+      "depends_on": ["C2"],
+      "title": "KB 详情 — RAG 智能对话面板（会话管理 + 流式输出 + 范围限定）",
+      "intent": "右侧可折叠 380px RAG 对话面板。支持多会话管理（新建/切换/删除）、SSE 流式输出（Markdown 渲染）、检索范围限定到单文档或单文件夹、来源引用展示（文档名+匹配度）、消息复制/点赞/删除。",
+      "why": "用户需要基于知识库内容进行自然语言问答。会话管理让不同话题互不干扰。文档/文件夹范围限定让用户在大型 KB 中精准定位信息源。SSE 流式输出降低 LLM 等待焦虑。",
+      "why_source": "inferred",
+      "files": [
+        "frontend/src/views/KBDetail/KBDetailView.tsx",
+        "frontend/src/stores/chatStore.ts",
+        "frontend/src/api/client.ts",
+        "backend/app/api/rag.py",
+        "backend/app/services/rag.py",
+        "backend/app/services/embedder.py",
+        "backend/app/services/keyword_search.py",
+        "backend/app/services/entity_search.py"
+      ],
+      "acceptance_seed": [
+        "面板宽度 380px，顶部 展开/收起 按钮切换显示",
+        "会话下拉选择器显示当前会话标题，右侧 +新建 和 🗑删除 按钮",
+        "新建会话默认标题取首条问题前 30 字",
+        "点击文档行将检索限定到该文档——行左侧出现紫色左边框高亮 + 输入框上方显示蓝色范围标签 '📄 文件名 ✕'",
+        "点击文件夹进入子目录将检索限定到该文件夹——文件夹行高亮 + 输入框上方显示文件夹范围标签 ✕",
+        "AI 回答使用 ReactMarkdown + remarkGfm 渲染（标题/列表/加粗/引用/代码块）",
+        "每条 AI 回答下方折叠显示来源引用（文档名 + 匹配度百分比）",
+        "回答采用 SSE 流式输出，逐字显示，加载中显示闪烁光标 |",
+        "输入框 Enter 发送、Shift+Enter 换行，发送中禁用输入",
+        "空状态显示 '基于当前知识库内容提问'",
+        "消息支持复制（一键复制 Markdown 原文，复制后显示✓）",
+        "消息支持点赞切换（👍 实心/空心），点赞状态持久化到后端",
+        "消息支持删除（仅限 AI 回答，前端隐藏 + 后端删除）",
+        "后端 RAG 管线：向量检索（pgvector）+ 关键词检索 + 实体检索 并行 → 合并去重 → 重排序（CrossEncoder bge-reranker-v2-m3） → LLM 生成",
+        "后端检索支持 doc_id / folder_id 可选过滤参数"
+      ]
+    },
+    {
+      "id": "C5",
+      "prd_order": 5,
+      "impl_order": 5,
+      "depends_on": ["C2"],
+      "title": "KB 详情 — FAQ 问答管理 & 推荐问题",
+      "intent": "文件列表下方 FAQ 管理区（可折叠问答对 + 增删功能）+ 推荐问题标签芯片列表（点击自动发送到对话面板）",
+      "why": "FAQ 预设问答提升首次使用体验，避免空状态茫然。推荐问题引导用户探索知识库内容。",
+      "why_source": "inferred",
+      "files": [
+        "frontend/src/views/KBDetail/KBDetailView.tsx",
+        "backend/app/api/faq.py",
+        "backend/app/models/models.py"
+      ],
+      "acceptance_seed": [
+        "FAQ 区域标题 'FAQ 问答管理' + 添加按钮",
+        "已有 FAQ 以 <details> 折叠元素展示，点击展开显示预设答案",
+        "每个 FAQ 项右上角有 × 删除按钮",
+        "点击添加展开表单：问题 input + 答案 textarea + 保存/取消",
+        "推荐问题以标签芯片水平排列",
+        "点击推荐问题自动发送到对话面板并展开对话面板",
+        "推荐问题数据来自 KB 的 recommended_questions 字段"
+      ]
+    },
+    {
+      "id": "C6",
+      "prd_order": 6,
+      "impl_order": 6,
+      "depends_on": ["C1"],
+      "title": "知识图谱可视化",
+      "intent": "独立的知识图谱页面，顶部 KB 选择器（分组下拉），4 个统计卡片（节点数/连接数/总实体/总关系），左侧 12 个业务主题筛选栏（客服场景），中间搜索框 + ECharts 力导向图 Canvas，底部节点详情面板",
+      "why": "用户需要按业务主题浏览知识库中的实体和关系网。12 个保险客服主题为后续业务扩展预留了垂直场景入口。",
+      "why_source": "inferred",
+      "files": [
+        "frontend/src/views/Graph/GraphView.tsx",
+        "frontend/src/views/Graph/GraphView.module.css",
+        "frontend/src/components/Graph/GraphCanvas.tsx",
+        "backend/app/api/graph_api.py",
+        "backend/app/services/graph.py",
+        "backend/app/services/extractor.py"
+      ],
+      "acceptance_seed": [
+        "顶部 KB 选择器：下拉分组显示个人/共享 KB，选中项高亮",
+        "4 个统计卡片（节点数/连接数/总实体/总关系）带彩色图标",
+        "左侧 12 个业务主题按钮（退款诉求/投诉威胁/专业人士进线/代家人进线 等），每个显示匹配数",
+        "点击主题按钮筛选节点（高亮选中，其他变灰），再次点击取消筛选",
+        "搜索框支持按节点名称/类型/别名字段实时过滤",
+        "搜索框有 × 清除按钮，筛选状态有 '重置' 按钮",
+        "GraphCanvas 使用 ECharts force 力导向布局渲染节点和边",
+        "点击节点弹出详情面板：节点名称、类型、别名、关联度",
+        "空状态提示 '上传文档后，AI 会自动抽取实体和关系构建知识图谱'",
+        "后端实体类型 7 种：person/organization/concept/technology/product/location/event"
+      ]
+    },
+    {
+      "id": "C7",
+      "prd_order": 7,
+      "impl_order": 7,
+      "depends_on": ["C1"],
+      "title": "Agent Operator 全局智能导入面板",
+      "intent": "右侧独立的 Agent Operator 面板，支持选择目标 KB、对话式智能导入（文件上传 + URL 导入）。使用 OpenAI function-calling 协议（import_url / upload_file 两个工具），最多 3 轮对话循环。面板宽度可通过左边缘拖拽调整（280-600px），支持折叠为 44px 窄条。",
+      "why": "Agent 对话式交互比传统上传表单更智能——用户可以粘贴链接、描述需求，Agent 自动处理。全局面板让用户在任何页面都能快速导入新内容。",
+      "why_source": "inferred",
+      "files": [
+        "frontend/src/components/Layout/Operator.tsx",
+        "frontend/src/components/Layout/Operator.module.css",
+        "backend/app/api/rag.py (agent/chat endpoint)",
+        "frontend/src/skills/registry.ts",
+        "frontend/src/skills/definitions/upload-file/index.ts"
+      ],
+      "acceptance_seed": [
+        "Operator 面板默认宽度 360px，可通过左边缘拖拽调整（280-600px）",
+        "顶部 KB 选择器（分组：个人/共享 KB），选中项高亮",
+        "空状态欢迎界面：Bot 图标 + 介绍文字 + '上传文件' '导入链接' 快捷按钮",
+        "用户消息紫色气泡（右侧），Agent 回复灰色气泡（左侧）",
+        "Agent 支持 tool_calls：导入链接时显示 🔧 工具执行横幅",
+        "输入框粘贴完整 URL 自动识别并发送导入指令",
+        "附件菜单（📎）：上传文件、导入链接 两个选项",
+        "面板可折叠为 44px 窄条，只显示展开按钮",
+        "文件上传后自动解析（parse → chunk → embed → extract → graph）"
+      ]
+    },
+    {
+      "id": "C8",
+      "prd_order": 8,
+      "impl_order": 8,
+      "depends_on": [],
+      "title": "系统设置页",
+      "intent": "通过侧边栏 '设置' 入口进入的独立页面。居中单列表单（max-width 540px），按功能分组：LLM 大模型（API Base / 模型名称 / API Key）、Embedding 嵌入（模型名称，只读）、文档分块（Chunk Size / Overlap）、RAG 检索（Top K / 相似度阈值）。保存按钮显示状态切换（保存设置 → 保存中... → ✓ 已保存）。",
+      "why": "用户需要配置 LLM API 和 RAG 参数来控制系统的 AI 行为。后端通过 settings（.env 文件）控制，设置页面用于查看和前端引用。",
+      "why_source": "inferred",
+      "files": [
+        "frontend/src/views/Settings/SettingsView.tsx",
+        "frontend/src/views/Settings/SettingsView.module.css",
+        "backend/app/api/admin.py",
+        "backend/app/core/config.py"
+      ],
+      "acceptance_seed": [
+        "表单最大宽度 540px，水平居中",
+        "LLM 组：API Base URL（文本框）、模型名称（文本框）、API Key（密码框脱敏只读，提示修改 .env）",
+        "Embedding 组：模型名称（只读，提示本地方案）",
+        "分块组：Chunk Size（128-4096, 默认 512）、Overlap（0-512, 默认 50）",
+        "RAG 组：Top K（1-50, 默认 5）、相似度阈值（0-1, 步长 0.05, 默认 0.5）",
+        "每行有灰色提示文字解释参数含义",
+        "保存按钮状态：默认 → 保存中（禁用）→ 已保存（绿色 ✓，2秒后恢复）",
+        "底部状态条显示当前使用的模型名称"
+      ]
+    }
+  ]
+}

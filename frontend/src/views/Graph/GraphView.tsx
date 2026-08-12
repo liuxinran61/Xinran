@@ -1,4 +1,12 @@
-// ===== AI Knowledge OS Web — Graph View =====
+// ===== Graph View — 知识图谱可视化页面 ===================================
+//
+// 双过滤管线：主题类型精确匹配 → 搜索词模糊匹配 → 边过滤
+//   Step 1: selectedTopic 精确匹配 node.type → 缩小节点集
+//   Step 2: searchQuery 模糊匹配 name / aliases / type → 进一步过滤
+//   Step 3: 只保留两端节点都在 visibleNodeIds 中的边
+//
+// 12 个保险客服业务主题硬编码为 TOPICS 常量
+// ECharts 力导向图由 GraphCanvas 组件渲染
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   Search, Sparkles, ChevronDown,
@@ -64,7 +72,7 @@ export function GraphView() {
     fetchGraph();
   }, [fetchGraph]);
 
-  // Build entity → type map for edge filtering
+  // ── 构建 entity → type 映射表（用于边过滤时快速查找）
   const entityTypeMap = useMemo(() => {
     if (!graphData) return new Map<string, string>();
     const map = new Map<string, string>();
@@ -74,7 +82,7 @@ export function GraphView() {
     return map;
   }, [graphData]);
 
-  // Multi-filter pipeline: topic type filter → search query
+  // ── 双过滤器管道：主题 → 搜索词 → 边裁剪 ──────────
   const filteredData = useMemo(() => {
     if (!graphData) return null;
 
@@ -133,7 +141,7 @@ export function GraphView() {
 
   return (
     <div className={styles.center}>
-      {/* Topbar — header + KB selector */}
+          {/* ── 顶栏：页面标题 + KB 选择器 + 刷新 ── */}
       <div className={styles.topbar}>
         <div>
           <h1 className={styles.pageTitle}>知识图谱</h1>
@@ -194,7 +202,7 @@ export function GraphView() {
       </div>
 
       <div className={styles.scroll}>
-        {/* Stat Cards */}
+                {/* ===== 4 个统计卡片 ===== */}
         <div className={styles.statRow}>
           {[
             { label: "节点数", value: nodeCount, icon: Hash, color: "purple" },
@@ -214,7 +222,7 @@ export function GraphView() {
           ))}
         </div>
 
-        {/* Main: Topic sidebar + Graph canvas */}
+                {/* ===== 主体：左侧主题筛选 + 右侧搜索 + 图谱 Canvas ===== */}
         <div className={styles.workspace}>
           {/* Left: Topic clusters as filter */}
           <div className={styles.clusters}>
@@ -303,7 +311,7 @@ export function GraphView() {
           </div>
         </div>
 
-        {/* Node detail (if selected) */}
+                {/* ===== 节点详情面板 ===== */}
         {selectedNode && (
           <div className={styles.nodeDetail}>
             <div className={styles.nodeDetailHeader}>
